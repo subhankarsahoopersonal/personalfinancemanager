@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Personal Finance Manager - Track your expenses, income, savings goals and investments with beautiful visualizations">
+    <title>Personal Finance Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#gradient1)" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="url(#gradient1)" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <defs>
+                                <linearGradient id="gradient1" x1="2" y1="2" x2="22" y2="22">
+                                    <stop stop-color="#6366f1" />
+                                    <stop offset="1" stop-color="#a855f7" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <span class="logo-text">FinanceX</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active">
+                        <a href="#dashboard">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" rx="1" />
+                                <rect x="14" y="3" width="7" height="7" rx="1" />
+                                <rect x="3" y="14" width="7" height="7" rx="1" />
+                                <rect x="14" y="14" width="7" height="7" rx="1" />
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#analytics">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 20V10" />
+                                <path d="M12 20V4" />
+                                <path d="M6 20v-6" />
+                            </svg>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#portfolio">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            </svg>
+                            <span>Portfolio</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#transactions">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23" />
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            <span>Transactions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#reports">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3" />
+                                <path
+                                    d="M12 1v6m0 6v10M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m6 0h10M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24" />
+                            </svg>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar" id="sidebar-avatar">
+                        <span>?</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="sidebar-username">New User</span>
+                        <span class="user-role">Premium User</span>
+                    </div>
+                </div>
+                <div class="sidebar-credit">Made with <span class="heart">❤️</span> by Subha</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <h1>Financial Dashboard</h1>
+                    <p class="date-display">Thursday, January 1, 2026</p>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <input type="text" id="dashboard-search" placeholder="Search transactions, pages...">
+                        <div class="search-results" id="search-results"></div>
+                    </div>
+                    <button class="notification-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <span class="notification-badge">3</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content page-section" id="dashboard-page">
+                <!-- Stats Cards -->
+                <section class="stats-grid">
+                    <div class="stat-card" id="total-balance-card">
+                        <div class="stat-icon balance-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" />
+                                <line x1="1" y1="10" x2="23" y2="10" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Balance</span>
+                            <span class="stat-value">$284,592.00</span>
+                            <span class="stat-change positive">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                    <polyline points="17 6 23 6 23 12" />
+                                </svg>
+                                +12.5%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" id="income-card">
+                        <div class="stat-icon income-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23" />
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Monthly Income</span>
+                            <span class="stat-value">$24,850.00</span>
+                            <span class="stat-change positive">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                    <polyline points="17 6 23 6 23 12" />
+                                </svg>
+                                +8.2%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" id="expenses-card">
+                        <div class="stat-icon expenses-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Monthly Expenses</span>
+                            <span class="stat-value">$12,420.00</span>
+                            <span class="stat-change negative">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                                    <polyline points="17 18 23 18 23 12" />
+                                </svg>
+                                -3.1%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" id="investments-card">
+                        <div class="stat-icon investments-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Investments</span>
+                            <span class="stat-value">$156,340.00</span>
+                            <span class="stat-change positive">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                                    <polyline points="17 6 23 6 23 12" />
+                                </svg>
+                                +18.7%
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Charts Row -->
+                <section class="charts-row">
+                    <div class="chart-card main-chart">
+                        <div class="chart-header">
+                            <h2>Revenue Overview</h2>
+                            <div class="chart-actions">
+                                <button class="chart-period active" data-period="week">Week</button>
+                                <button class="chart-period" data-period="month">Month</button>
+                                <button class="chart-period" data-period="year">Year</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card pie-chart">
+                        <div class="chart-header">
+                            <h2>Spending Categories</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                        <div class="chart-legend" id="spending-legend"></div>
+                    </div>
+                </section>
+
+                <!-- Bottom Section -->
+                <section class="bottom-section">
+                    <!-- Recent Transactions -->
+                    <div class="transactions-card">
+                        <div class="card-header">
+                            <h2>Recent Transactions</h2>
+                            <a href="#" class="view-all">View All</a>
+                        </div>
+                        <div class="transactions-list">
+                            <div class="transaction-item">
+                                <div class="transaction-icon shopping">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                    </svg>
+                                </div>
+                                <div class="transaction-details">
+                                    <span class="transaction-name">Amazon Purchase</span>
+                                    <span class="transaction-date">Jan 1, 2026</span>
+                                </div>
+                                <span class="transaction-amount negative">-$156.00</span>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-icon income">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path
+                                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                    </svg>
+                                </div>
+                                <div class="transaction-details">
+                                    <span class="transaction-name">Salary Deposit</span>
+                                    <span class="transaction-date">Dec 31, 2025</span>
+                                </div>
+                                <span class="transaction-amount positive">+$8,500.00</span>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-icon food">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                                        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                                        <line x1="6" y1="1" x2="6" y2="4" />
+                                        <line x1="10" y1="1" x2="10" y2="4" />
+                                        <line x1="14" y1="1" x2="14" y2="4" />
+                                    </svg>
+                                </div>
+                                <div class="transaction-details">
+                                    <span class="transaction-name">Restaurant Bill</span>
+                                    <span class="transaction-date">Dec 30, 2025</span>
+                                </div>
+                                <span class="transaction-amount negative">-$85.50</span>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-icon transfer">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="17" y1="17" x2="7" y2="7" />
+                                        <polyline points="7 17 7 7 17 7" />
+                                    </svg>
+                                </div>
+                                <div class="transaction-details">
+                                    <span class="transaction-name">Investment Transfer</span>
+                                    <span class="transaction-date">Dec 29, 2025</span>
+                                </div>
+                                <span class="transaction-amount negative">-$2,000.00</span>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-icon subscription">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <path d="m9 12 2 2 4-4" />
+                                    </svg>
+                                </div>
+                                <div class="transaction-details">
+                                    <span class="transaction-name">Netflix Subscription</span>
+                                    <span class="transaction-date">Dec 28, 2025</span>
+                                </div>
+                                <span class="transaction-amount negative">-$15.99</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Portfolio Performance -->
+                    <div class="portfolio-card">
+                        <div class="card-header">
+                            <h2>Portfolio Performance</h2>
+                        </div>
+                        <div class="chart-container small-chart">
+                            <canvas id="portfolioChart"></canvas>
+                        </div>
+                        <div class="portfolio-assets">
+                            <div class="asset-item">
+                                <div class="asset-info">
+                                    <span class="asset-symbol">AAPL</span>
+                                    <span class="asset-name">Apple Inc.</span>
+                                </div>
+                                <div class="asset-value">
+                                    <span class="asset-price">$182.52</span>
+                                    <span class="asset-change positive">+2.4%</span>
+                                </div>
+                            </div>
+                            <div class="asset-item">
+                                <div class="asset-info">
+                                    <span class="asset-symbol">GOOGL</span>
+                                    <span class="asset-name">Alphabet Inc.</span>
+                                </div>
+                                <div class="asset-value">
+                                    <span class="asset-price">$141.80</span>
+                                    <span class="asset-change positive">+1.8%</span>
+                                </div>
+                            </div>
+                            <div class="asset-item">
+                                <div class="asset-info">
+                                    <span class="asset-symbol">TSLA</span>
+                                    <span class="asset-name">Tesla Inc.</span>
+                                </div>
+                                <div class="asset-value">
+                                    <span class="asset-price">$248.42</span>
+                                    <span class="asset-change negative">-0.9%</span>
+                                </div>
+                            </div>
+                            <div class="asset-item">
+                                <div class="asset-info">
+                                    <span class="asset-symbol">MSFT</span>
+                                    <span class="asset-name">Microsoft Corp.</span>
+                                </div>
+                                <div class="asset-value">
+                                    <span class="asset-price">$374.58</span>
+                                    <span class="asset-change positive">+3.1%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Goals -->
+                    <div class="goals-card">
+                        <div class="card-header">
+                            <h2>Financial Goals</h2>
+                            <button class="add-goal-btn">+</button>
+                        </div>
+                        <div class="goals-list">
+                            <div class="goal-item">
+                                <div class="goal-info">
+                                    <span class="goal-name">Emergency Fund</span>
+                                    <span class="goal-target">$15,000 of $20,000</span>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 75%"></div>
+                                    </div>
+                                    <span class="progress-percent">75%</span>
+                                </div>
+                            </div>
+
+                            <div class="goal-item">
+                                <div class="goal-info">
+                                    <span class="goal-name">Vacation Fund</span>
+                                    <span class="goal-target">$3,200 of $5,000</span>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress-bar vacation">
+                                        <div class="progress-fill" style="width: 64%"></div>
+                                    </div>
+                                    <span class="progress-percent">64%</span>
+                                </div>
+                            </div>
+
+                            <div class="goal-item">
+                                <div class="goal-info">
+                                    <span class="goal-name">New Car</span>
+                                    <span class="goal-target">$28,500 of $45,000</span>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress-bar car">
+                                        <div class="progress-fill" style="width: 63%"></div>
+                                    </div>
+                                    <span class="progress-percent">63%</span>
+                                </div>
+                            </div>
+
+                            <div class="goal-item">
+                                <div class="goal-info">
+                                    <span class="goal-name">Investment Portfolio</span>
+                                    <span class="goal-target">$156,340 of $200,000</span>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress-bar investment">
+                                        <div class="progress-fill" style="width: 78%"></div>
+                                    </div>
+                                    <span class="progress-percent">78%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Analytics Page -->
+            <div class="page-section" id="analytics-page" style="display: none;">
+                <div class="page-header">
+                    <h2>Analytics</h2>
+                    <p>Deep insights into your financial performance</p>
+                </div>
+                <div class="analytics-grid">
+                    <div class="chart-card full-width">
+                        <div class="chart-header">
+                            <h3>Income vs Expenses Trend</h3>
+                        </div>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="analyticsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Average Daily Spending</span>
+                            <span class="stat-value" id="avg-daily-spending">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Savings Rate</span>
+                            <span class="stat-value" id="savings-rate">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Top Spending Category</span>
+                            <span class="stat-value" id="top-category">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Page -->
+            <div class="page-section" id="portfolio-page" style="display: none;">
+                <div class="page-header">
+                    <h2>Investment Portfolio</h2>
+                    <p>Track your investments and holdings</p>
+                </div>
+                <div class="portfolio-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Portfolio Allocation</h3>
+                        </div>
+                        <div class="chart-container" style="height: 280px;">
+                            <canvas id="portfolioAllocationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Holdings</h3>
+                            <button class="add-goal-btn" onclick="openPortfolioModal()">+</button>
+                        </div>
+                        <div class="portfolio-assets" id="portfolio-list">
+                            <p class="empty-message">No holdings yet. Click + to add.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div class="page-section" id="transactions-page" style="display: none;">
+                <div class="page-header">
+                    <h2>Transactions</h2>
+                    <p>Complete history of all your transactions</p>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="transactions-filters">
+                    <div class="search-box transactions-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" id="transaction-search" placeholder="Search transactions...">
+                    </div>
+                    <select id="filter-type" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <select id="filter-category" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="bill">Bill</option>
+                        <option value="education">Education</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="food">Food</option>
+                        <option value="grocery">Grocery</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="housing">Housing</option>
+                        <option value="income">Income</option>
+                        <option value="personal">Personal</option>
+                    </select>
+                    <select id="filter-tag" class="filter-select">
+                        <option value="">All Tags</option>
+                        <option value="bill">Bill</option>
+                        <option value="car">Car</option>
+                        <option value="essentials">Essentials</option>
+                        <option value="extra">Extra</option>
+                        <option value="freelance">Freelance</option>
+                        <option value="housing">Housing</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="restaurant">Restaurant</option>
+                        <option value="social">Social</option>
+                    </select>
+                </div>
+
+                <div class="transactions-full">
+                    <div class="transactions-card full-width">
+                        <div class="card-header">
+                            <h3>All Transactions</h3>
+                            <div class="header-actions">
+                                <button class="export-btn" onclick="exportTransactionsCSV()" title="Export as CSV">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        width="16" height="16">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    CSV
+                                </button>
+                                <button class="export-btn" onclick="exportTransactionsPDF()" title="Export as PDF">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        width="16" height="16">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                        <polyline points="14 2 14 8 20 8" />
+                                        <line x1="16" y1="13" x2="8" y2="13" />
+                                        <line x1="16" y1="17" x2="8" y2="17" />
+                                    </svg>
+                                    PDF
+                                </button>
+                                <button class="add-goal-btn" onclick="openTransactionModal()">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="transactions-list" id="full-transactions-list">
+                        <p class="empty-message">No transactions yet. Click + to add.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div class="page-section" id="reports-page" style="display: none;">
+                <div class="page-header">
+                    <h2>Financial Reports</h2>
+                    <p>Generate and export your financial reports</p>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card" onclick="generateReport('monthly')">
+                        <div class="report-icon">📊</div>
+                        <h3>Monthly Summary</h3>
+                        <p>Income, expenses, and balance overview</p>
+                    </div>
+                    <div class="report-card" onclick="generateReport('spending')">
+                        <div class="report-icon">💳</div>
+                        <h3>Spending Analysis</h3>
+                        <p>Breakdown by category</p>
+                    </div>
+                    <div class="report-card" onclick="generateReport('goals')">
+                        <div class="report-icon">🎯</div>
+                        <h3>Goals Progress</h3>
+                        <p>Track your savings goals</p>
+                    </div>
+                    <div class="report-card" onclick="generateReport('yearly')">
+                        <div class="report-icon">📈</div>
+                        <h3>Annual Report</h3>
+                        <p>Year-over-year comparison</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page-section" id="settings-page" style="display: none;">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p>Customize your dashboard preferences</p>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Profile</h3>
+                        <div class="settings-item">
+                            <label>Display Name</label>
+                            <input type="text" id="settings-name" placeholder="Your Name" value="">
+                        </div>
+                        <div class="settings-item">
+                            <label>Currency</label>
+                            <select id="settings-currency">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="INR">INR (₹)</option>
+                            </select>
+                        </div>
+                        <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Data Management</h3>
+                        <div class="settings-item">
+                            <button class="btn-cancel" style="width: 100%" onclick="exportData()">📥 Export
+                                Data</button>
+                        </div>
+                        <div class="settings-item">
+                            <button class="btn-delete" style="width: 100%" onclick="confirmClearData()">🗑️ Clear All
+                                Data</button>
+                        </div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Firebase Status</h3>
+                        <div class="settings-item">
+                            <span id="firebase-status">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Data Management -->
+    <script src="firebase-data.js"></script>
+
+    <!-- Main App Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
