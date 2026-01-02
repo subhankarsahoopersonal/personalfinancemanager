@@ -3,6 +3,9 @@
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize login page handlers
+    initLoginPage();
+
     // Load saved settings first
     loadSettings();
 
@@ -17,6 +20,97 @@ document.addEventListener('DOMContentLoaded', function () {
     updateDateTime();
     initDashboardSearch();
 });
+
+/* ============================================
+   LOGIN PAGE HANDLERS
+   ============================================ */
+
+function initLoginPage() {
+    // Tab switching
+    const loginTabs = document.querySelectorAll('.login-tab');
+    loginTabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+            const targetTab = this.dataset.tab;
+
+            // Update tab active states
+            loginTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            // Show/hide forms
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+
+            if (targetTab === 'signin') {
+                document.getElementById('signin-form').classList.add('active');
+            } else {
+                document.getElementById('signup-form').classList.add('active');
+            }
+        });
+    });
+
+    // Sign In form submission
+    const signinForm = document.getElementById('signin-form');
+    if (signinForm) {
+        signinForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            const errorDiv = document.getElementById('signin-error');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            // Disable button while processing
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+            errorDiv.textContent = '';
+
+            const result = await signInWithEmail(email, password);
+
+            if (!result.success) {
+                errorDiv.textContent = result.error;
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign In';
+        });
+    }
+
+    // Sign Up form submission
+    const signupForm = document.getElementById('signup-form');
+    if (signupForm) {
+        signupForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const displayName = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm').value;
+            const errorDiv = document.getElementById('signup-error');
+            const submitBtn = this.querySelector('button[type="submit"]');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            // Disable button while processing
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+            errorDiv.textContent = '';
+
+            const result = await signUpWithEmail(email, password, displayName);
+
+            if (!result.success) {
+                errorDiv.textContent = result.error;
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Account';
+        });
+    }
+}
 
 /* ============================================
    DASHBOARD SEARCH
@@ -437,13 +531,19 @@ function initPortfolioChart() {
 
 function initChartPeriodButtons() {
     const buttons = document.querySelectorAll('.chart-period');
+    const slider = document.getElementById('period-slider');
 
-    buttons.forEach(button => {
+    buttons.forEach((button, index) => {
         button.addEventListener('click', function () {
             // Remove active class from all buttons
             buttons.forEach(btn => btn.classList.remove('active'));
             // Add active class to clicked button
             this.classList.add('active');
+
+            // Move slider to the clicked button position
+            if (slider) {
+                slider.style.transform = `translateX(${index * 100}%)`;
+            }
 
             // Update chart data based on period
             updateRevenueChart(this.dataset.period);
@@ -1038,6 +1138,9 @@ function initSettingsPage() {
     // Load saved settings into form
     loadSettings();
 
+    // Initialize currency selector
+    initCurrencySelector();
+
     // Update Firebase status
     const statusEl = document.getElementById('firebase-status');
     if (statusEl) {
@@ -1051,6 +1154,32 @@ function initSettingsPage() {
             statusEl.style.color = '#ef4444';
         }
     }
+}
+
+function initCurrencySelector() {
+    const selector = document.getElementById('currency-selector');
+    const hiddenInput = document.getElementById('settings-currency');
+
+    if (!selector || !hiddenInput) return;
+
+    const options = selector.querySelectorAll('.currency-option');
+    const currentCurrency = hiddenInput.value || getCurrentCurrency();
+
+    // Set initial selected state
+    options.forEach(opt => {
+        if (opt.dataset.value === currentCurrency) {
+            opt.classList.add('selected');
+        }
+
+        opt.addEventListener('click', function () {
+            // Remove selected from all
+            options.forEach(o => o.classList.remove('selected'));
+            // Add selected to clicked
+            this.classList.add('selected');
+            // Update hidden input
+            hiddenInput.value = this.dataset.value;
+        });
+    });
 }
 
 /* ============================================
@@ -1067,11 +1196,12 @@ function loadSettings() {
             // Update settings form if on settings page
             const nameInput = document.getElementById('settings-name');
             const currencyInput = document.getElementById('settings-currency');
-            if (nameInput && settings.name) nameInput.value = settings.name;
+            // Use displayName (from Firebase) or name (legacy)
+            const userName = settings.displayName || settings.name;
+            if (nameInput && userName) nameInput.value = userName;
             if (currencyInput && settings.currency) currencyInput.value = settings.currency;
 
-            // Update sidebar with saved name
-            updateSidebarUser(settings.name);
+            // Don't update sidebar here - Firebase auth handles it
         } catch (e) {
             console.log('Could not load settings');
         }

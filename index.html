@@ -15,7 +15,184 @@
 </head>
 
 <body>
-    <div class="app-container">
+    <!-- Landing Page -->
+    <div class="landing-page" id="landing-page" style="display: none;">
+        <nav class="landing-nav">
+            <div class="landing-logo">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#landingGrad)" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M2 17L12 22L22 17" stroke="url(#landingGrad)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M2 12L12 17L22 12" stroke="url(#landingGrad)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <defs>
+                        <linearGradient id="landingGrad" x1="2" y1="2" x2="22" y2="22">
+                            <stop stop-color="#6366f1" />
+                            <stop offset="1" stop-color="#a855f7" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>FinanceX</span>
+            </div>
+            <div class="landing-nav-btns">
+                <button class="landing-btn-secondary" onclick="showAuthPage('signin')">Sign In</button>
+                <button class="landing-btn-primary" onclick="showAuthPage('signup')">Get Started</button>
+            </div>
+        </nav>
+
+        <section class="landing-hero">
+            <div class="hero-content">
+                <h1>Take Control of Your <span class="gradient-text">Financial Future</span></h1>
+                <p>Track expenses, manage investments, and achieve your savings goals with our powerful personal finance
+                    dashboard.</p>
+                <div class="hero-btns">
+                    <button class="landing-btn-primary large" onclick="showAuthPage('signup')">
+                        Start Free Today
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"
+                            height="20">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    <button class="landing-btn-secondary large" onclick="showAuthPage('signin')">I Have an
+                        Account</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-card card-1">
+                    <span class="card-icon">💰</span>
+                    <span class="card-label">Total Balance</span>
+                    <span class="card-value">$284,592</span>
+                </div>
+                <div class="hero-card card-2">
+                    <span class="card-icon">📈</span>
+                    <span class="card-label">Monthly Growth</span>
+                    <span class="card-value positive">+12.5%</span>
+                </div>
+                <div class="hero-card card-3">
+                    <span class="card-icon">🎯</span>
+                    <span class="card-label">Goals Progress</span>
+                    <span class="card-value">78%</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-features">
+            <h2>Everything You Need</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Smart Analytics</h3>
+                    <p>Visualize your spending patterns with beautiful charts and insights.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3>Transaction Tracking</h3>
+                    <p>Easily log and categorize all your income and expenses.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Savings Goals</h3>
+                    <p>Set financial goals and track your progress over time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Investment Portfolio</h3>
+                    <p>Monitor your investments and portfolio performance.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="landing-footer">
+            <p>Made with <span class="heart">❤️</span> by Subha</p>
+        </footer>
+    </div>
+
+    <!-- Login Page -->
+    <div class="login-page" id="login-page" style="display: none;">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#loginGrad)" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M2 17L12 22L22 17" stroke="url(#loginGrad)" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 12L12 17L22 12" stroke="url(#loginGrad)" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <defs>
+                            <linearGradient id="loginGrad" x1="2" y1="2" x2="22" y2="22">
+                                <stop stop-color="#6366f1" />
+                                <stop offset="1" stop-color="#a855f7" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1>Personal Finance Manager</h1>
+                <p>Manage your finances securely</p>
+            </div>
+
+            <div class="login-form-container">
+                <div class="login-tabs">
+                    <button class="login-tab active" data-tab="signin">Sign In</button>
+                    <button class="login-tab" data-tab="signup">Sign Up</button>
+                </div>
+
+                <form id="signin-form" class="auth-form active">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="signin-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="password-input">
+                            <input type="password" id="signin-password" placeholder="Enter your password" required>
+                            <button type="button" class="toggle-password"
+                                onclick="togglePassword('signin-password')">👁️</button>
+                        </div>
+                    </div>
+                    <div class="auth-error" id="signin-error"></div>
+                    <button type="submit" class="auth-btn">Sign In</button>
+                </form>
+
+                <form id="signup-form" class="auth-form">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="signup-name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="signup-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="password-input">
+                            <input type="password" id="signup-password" placeholder="Create a password (min 6 chars)"
+                                required minlength="6">
+                            <button type="button" class="toggle-password"
+                                onclick="togglePassword('signup-password')">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <div class="password-input">
+                            <input type="password" id="signup-confirm" placeholder="Confirm your password" required>
+                            <button type="button" class="toggle-password"
+                                onclick="togglePassword('signup-confirm')">👁️</button>
+                        </div>
+                    </div>
+                    <div class="auth-error" id="signup-error"></div>
+                    <button type="submit" class="auth-btn">Create Account</button>
+                </form>
+            </div>
+
+            <div class="login-footer">
+                <p>Made with <span class="heart">❤️</span> by Subha</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" style="display: none;">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -112,9 +289,17 @@
                     </div>
                     <div class="user-info">
                         <span class="user-name" id="sidebar-username">New User</span>
-                        <span class="user-role">Premium User</span>
+                        <span class="user-role" id="sidebar-email">Premium User</span>
                     </div>
                 </div>
+                <button class="logout-btn" id="logout-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Logout
+                </button>
                 <div class="sidebar-credit">Made with <span class="heart">❤️</span> by Subha</div>
             </div>
         </aside>
@@ -236,9 +421,12 @@
                         <div class="chart-header">
                             <h2>Revenue Overview</h2>
                             <div class="chart-actions">
-                                <button class="chart-period active" data-period="week">Week</button>
-                                <button class="chart-period" data-period="month">Month</button>
-                                <button class="chart-period" data-period="year">Year</button>
+                                <div class="period-slider-container">
+                                    <div class="period-slider" id="period-slider"></div>
+                                    <button class="chart-period active" data-period="week">Week</button>
+                                    <button class="chart-period" data-period="month">Month</button>
+                                    <button class="chart-period" data-period="year">Year</button>
+                                </div>
                             </div>
                         </div>
                         <div class="chart-container">
@@ -646,14 +834,39 @@
                         </div>
                         <div class="settings-item">
                             <label>Currency</label>
-                            <select id="settings-currency">
-                                <option value="USD">USD ($)</option>
-                                <option value="EUR">EUR (€)</option>
-                                <option value="GBP">GBP (£)</option>
-                                <option value="INR">INR (₹)</option>
-                            </select>
+                            <div class="currency-selector" id="currency-selector">
+                                <div class="currency-option" data-value="USD">
+                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-name">US Dollar</span>
+                                    <span class="currency-code">USD</span>
+                                </div>
+                                <div class="currency-option" data-value="EUR">
+                                    <span class="currency-symbol">€</span>
+                                    <span class="currency-name">Euro</span>
+                                    <span class="currency-code">EUR</span>
+                                </div>
+                                <div class="currency-option" data-value="GBP">
+                                    <span class="currency-symbol">£</span>
+                                    <span class="currency-name">British Pound</span>
+                                    <span class="currency-code">GBP</span>
+                                </div>
+                                <div class="currency-option" data-value="INR">
+                                    <span class="currency-symbol">₹</span>
+                                    <span class="currency-name">Indian Rupee</span>
+                                    <span class="currency-code">INR</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="settings-currency" value="USD">
                         </div>
-                        <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+                        <button class="settings-save-btn" onclick="saveSettings()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                                height="18">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
+                            </svg>
+                            Save Changes
+                        </button>
                     </div>
                     <div class="settings-card">
                         <h3>Data Management</h3>
@@ -680,6 +893,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <!-- Firebase Data Management -->
     <script src="firebase-data.js"></script>

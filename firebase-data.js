@@ -25,7 +25,9 @@ const firebaseConfig = {
 
 // Initialize Firebase (will be done after SDK loads)
 let db = null;
+let auth = null;
 let firebaseInitialized = false;
+let currentUser = null;
 
 // Initialize Firebase when SDK is ready
 function initializeFirebase() {
@@ -33,6 +35,7 @@ function initializeFirebase() {
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
+            auth = firebase.auth();
 
             // Enable offline persistence for better reliability
             db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
@@ -42,18 +45,211 @@ function initializeFirebase() {
             firebaseInitialized = true;
             console.log('✅ Firebase initialized successfully!');
 
-            // Load data from Firebase
-            loadAllData();
+            // Setup auth state listener
+            setupAuthStateListener();
+
             return true;
         } catch (error) {
             console.error('❌ Firebase initialization failed:', error);
             showNotification('Using local data (Firebase offline)', 'warning');
-            refreshUI(); // Use default data
+            refreshUI();
             return false;
         }
     }
     return false;
 }
+
+/* ============================================
+   AUTHENTICATION FUNCTIONS
+   ============================================ */
+
+// Auth state listener
+function setupAuthStateListener() {
+    auth.onAuthStateChanged((user) => {
+        currentUser = user;
+
+        const landingPage = document.getElementById('landing-page');
+        const loginPage = document.getElementById('login-page');
+        const appContainer = document.getElementById('app-container');
+
+        if (user) {
+            // User is logged in - show dashboard
+            console.log('✅ User logged in:', user.email);
+            if (landingPage) landingPage.style.display = 'none';
+            if (loginPage) loginPage.style.display = 'none';
+            if (appContainer) appContainer.style.display = 'flex';
+
+            // Update sidebar with user info
+            updateSidebarUserFromAuth(user);
+
+            // Load user data
+            loadAllData();
+        } else {
+            // User is logged out - show landing page
+            console.log('👤 User logged out');
+            if (landingPage) landingPage.style.display = 'block';
+            if (loginPage) loginPage.style.display = 'none';
+            if (appContainer) appContainer.style.display = 'none';
+        }
+    });
+}
+
+// Show auth page (sign in or sign up)
+function showAuthPage(tab = 'signin') {
+    const landingPage = document.getElementById('landing-page');
+    const loginPage = document.getElementById('login-page');
+
+    if (landingPage) landingPage.style.display = 'none';
+    if (loginPage) loginPage.style.display = 'flex';
+
+    // Switch to the correct tab
+    const signinTab = document.querySelector('.login-tab[data-tab="signin"]');
+    const signupTab = document.querySelector('.login-tab[data-tab="signup"]');
+    const signinForm = document.getElementById('signin-form');
+    const signupForm = document.getElementById('signup-form');
+
+    if (tab === 'signup') {
+        signinTab?.classList.remove('active');
+        signupTab?.classList.add('active');
+        signinForm?.classList.remove('active');
+        signupForm?.classList.add('active');
+    } else {
+        signinTab?.classList.add('active');
+        signupTab?.classList.remove('active');
+        signinForm?.classList.add('active');
+        signupForm?.classList.remove('active');
+    }
+}
+
+// Make showAuthPage globally available
+window.showAuthPage = showAuthPage;
+
+// Sign up with email/password and save display name
+async function signUpWithEmail(email, password, displayName) {
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Update Firebase profile with display name
+        await user.updateProfile({
+            displayName: displayName
+        });
+
+        // Save user data to Firestore
+        if (db) {
+            await db.collection('users').doc(user.uid).set({
+                displayName: displayName,
+                email: email,
+                createdAt: new Date().toISOString()
+            });
+        }
+
+        console.log('✅ Account created:', user.email, 'Name:', displayName);
+        showNotification('Account created successfully!', 'success');
+        return { success: true, user: user };
+    } catch (error) {
+        console.error('❌ Sign up error:', error);
+        return { success: false, error: getAuthErrorMessage(error.code) };
+    }
+}
+
+// Sign in with email/password
+async function signInWithEmail(email, password) {
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('✅ User signed in:', userCredential.user.email);
+        showNotification('Welcome back!', 'success');
+        return { success: true, user: userCredential.user };
+    } catch (error) {
+        console.error('❌ Sign in error:', error);
+        return { success: false, error: getAuthErrorMessage(error.code) };
+    }
+}
+
+// Sign out
+async function signOutUser() {
+    try {
+        await auth.signOut();
+        console.log('✅ User signed out');
+        showNotification('Logged out successfully', 'success');
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Sign out error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Get user-friendly error messages
+function getAuthErrorMessage(errorCode) {
+    const errorMessages = {
+        'auth/email-already-in-use': 'This email is already registered. Try signing in.',
+        'auth/invalid-email': 'Please enter a valid email address.',
+        'auth/weak-password': 'Password should be at least 6 characters.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password. Please try again.',
+        'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
+        'auth/network-request-failed': 'Network error. Check your connection.',
+        'auth/invalid-credential': 'Invalid email or password.'
+    };
+    return errorMessages[errorCode] || 'An error occurred. Please try again.';
+}
+
+// Update sidebar with authenticated user info
+function updateSidebarUserFromAuth(user) {
+    const sidebarAvatar = document.getElementById('sidebar-avatar');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarEmail = document.getElementById('sidebar-email');
+
+    if (user) {
+        const displayName = user.displayName || user.email.split('@')[0];
+        const initial = displayName.charAt(0).toUpperCase();
+
+        if (sidebarAvatar) sidebarAvatar.innerHTML = `<span>${initial}</span>`;
+        if (sidebarUsername) sidebarUsername.textContent = displayName;
+        if (sidebarEmail) sidebarEmail.textContent = user.email;
+
+        // Save to localStorage for settings page
+        localStorage.setItem('dashboard-settings', JSON.stringify({
+            displayName: displayName,
+            currency: getCurrentCurrency()
+        }));
+    }
+}
+
+// Toggle password visibility
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+}
+
+// Handle logout
+async function handleLogout() {
+    if (!auth) {
+        showNotification('Auth not initialized', 'error');
+        return;
+    }
+
+    await signOutUser();
+}
+
+// Make functions globally available
+window.togglePassword = togglePassword;
+window.handleLogout = handleLogout;
+
+// Setup logout button event listener
+function setupLogoutButton() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+    setupLogoutButton();
+});
 
 /* ============================================
    DATA MODELS & DEFAULT DATA
