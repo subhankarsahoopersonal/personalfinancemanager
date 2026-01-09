@@ -300,6 +300,12 @@ const defaultData = {
 // Current data (either from Firebase or local)
 let currentData = JSON.parse(JSON.stringify(defaultData));
 
+// Helper to get user-specific document reference
+function getUserRef() {
+    if (!firebaseInitialized || !db || !currentUser) return null;
+    return db.collection('users').doc(currentUser.uid);
+}
+
 /* ============================================
    FIREBASE CRUD OPERATIONS
    ============================================ */
@@ -313,14 +319,17 @@ async function loadAllData() {
     }
 
     try {
+        const userRef = getUserRef();
+        if (!userRef) throw new Error('User not authenticated');
+
         // Load stats
-        const statsDoc = await db.collection('dashboard').doc('stats').get();
+        const statsDoc = await userRef.collection('dashboard').doc('stats').get();
         if (statsDoc.exists) {
             currentData.stats = statsDoc.data();
         }
 
         // Load transactions
-        const transactionsSnapshot = await db.collection('transactions').orderBy('date', 'desc').limit(10).get();
+        const transactionsSnapshot = await userRef.collection('transactions').orderBy('date', 'desc').limit(50).get();
         if (!transactionsSnapshot.empty) {
             currentData.transactions = transactionsSnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -329,7 +338,7 @@ async function loadAllData() {
         }
 
         // Load goals
-        const goalsSnapshot = await db.collection('goals').get();
+        const goalsSnapshot = await userRef.collection('goals').get();
         if (!goalsSnapshot.empty) {
             currentData.goals = goalsSnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -338,7 +347,7 @@ async function loadAllData() {
         }
 
         // Load portfolio
-        const portfolioSnapshot = await db.collection('portfolio').get();
+        const portfolioSnapshot = await userRef.collection('portfolio').get();
         if (!portfolioSnapshot.empty) {
             currentData.portfolio = portfolioSnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -347,7 +356,7 @@ async function loadAllData() {
         }
 
         // Load spending categories
-        const spendingDoc = await db.collection('dashboard').doc('spending').get();
+        const spendingDoc = await userRef.collection('dashboard').doc('spending').get();
         if (spendingDoc.exists) {
             currentData.spending = spendingDoc.data();
         }
@@ -379,8 +388,11 @@ async function saveStats(stats) {
 
     if (firebaseInitialized && db) {
         try {
-            await db.collection('dashboard').doc('stats').set(currentData.stats);
-            console.log('Stats saved to Firebase');
+            const userRef = getUserRef();
+            if (userRef) {
+                await userRef.collection('dashboard').doc('stats').set(currentData.stats);
+                console.log('Stats saved to Firebase');
+            }
         } catch (error) {
             console.error('Error saving stats:', error);
         }
@@ -395,13 +407,16 @@ async function saveTransaction(transaction) {
 
     if (firebaseInitialized && db) {
         try {
-            if (isNew) {
-                const docRef = await db.collection('transactions').add(transaction);
-                transaction.id = docRef.id;
-            } else {
-                await db.collection('transactions').doc(transaction.id).set(transaction);
+            const userRef = getUserRef();
+            if (userRef) {
+                if (isNew) {
+                    const docRef = await userRef.collection('transactions').add(transaction);
+                    transaction.id = docRef.id;
+                } else {
+                    await userRef.collection('transactions').doc(transaction.id).set(transaction);
+                }
+                console.log('Transaction saved to Firebase');
             }
-            console.log('Transaction saved to Firebase');
         } catch (error) {
             console.error('Error saving transaction:', error);
         }
@@ -412,29 +427,126 @@ async function saveTransaction(transaction) {
     }
 
     // Update local data
+    let oldTransaction = null;
     const existingIndex = currentData.transactions.findIndex(t => t.id === transaction.id);
+
     if (existingIndex >= 0) {
+        oldTransaction = { ...currentData.transactions[existingIndex] };
         currentData.transactions[existingIndex] = transaction;
     } else {
         currentData.transactions.unshift(transaction);
+        // If sorting is needed based on date
+        currentData.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
     }
 
-    // Keep only last 10 transactions in memory
-    currentData.transactions = currentData.transactions.slice(0, 10);
+    // Keep only last 10 transactions in memory for display, but we need full list for accurate stats if we were recalculating from scratch.
+    // However, here we are doing incremental updates.
+    if (currentData.transactions.length > 50) {
+        currentData.transactions = currentData.transactions.slice(0, 50);
+    }
+
+    // Update stats incrementally
+    updateStatsFromTransaction(transaction, isNew ? 'add' : 'edit', oldTransaction);
 
     refreshTransactionsUI();
     showNotification('Transaction saved!', 'success');
+}
+
+// Update stats based on transaction changes
+function updateStatsFromTransaction(transaction, action, oldTransaction = null) {
+    const stats = currentData.stats;
+    const spending = currentData.spending;
+    const amount = parseFloat(transaction.amount);
+    const category = transaction.category || 'Others';
+    const type = transaction.type || (amount >= 0 ? 'income' : 'expense');
+
+    // Helper to update specific category
+    const updateCategory = (cat, val) => {
+        // Capitalize first letter for matching keys in spending object
+        const key = cat.charAt(0).toUpperCase() + cat.slice(1);
+        if (spending[key] !== undefined) {
+            spending[key] += val;
+        } else {
+            // Try to find if it fits in 'Others' or map to existing
+            if (['bill', 'education', 'healthcare', 'personal'].includes(cat)) {
+                spending['Others'] = (spending['Others'] || 0) + val;
+            } else {
+                spending['Others'] = (spending['Others'] || 0) + val;
+            }
+        }
+    };
+
+    if (action === 'add') {
+        stats.totalBalance += amount;
+        if (amount >= 0) {
+            stats.monthlyIncome += amount;
+        } else {
+            stats.monthlyExpenses += Math.abs(amount);
+            if (type === 'expense') {
+                updateCategory(category, Math.abs(amount));
+            }
+        }
+    } else if (action === 'delete') {
+        stats.totalBalance -= amount;
+        if (amount >= 0) {
+            stats.monthlyIncome -= amount;
+        } else {
+            stats.monthlyExpenses -= Math.abs(amount);
+            if (type === 'expense') {
+                updateCategory(category, -Math.abs(amount));
+            }
+        }
+    } else if (action === 'edit' && oldTransaction) {
+        const oldAmount = parseFloat(oldTransaction.amount);
+        const oldCategory = oldTransaction.category || 'Others';
+        const oldType = oldTransaction.type;
+
+        // Revert old transaction effect
+        stats.totalBalance -= oldAmount;
+        if (oldAmount >= 0) {
+            stats.monthlyIncome -= oldAmount;
+        } else {
+            stats.monthlyExpenses -= Math.abs(oldAmount);
+            if (oldType === 'expense') {
+                updateCategory(oldCategory, -Math.abs(oldAmount));
+            }
+        }
+
+        // Apply new transaction effect
+        stats.totalBalance += amount;
+        if (amount >= 0) {
+            stats.monthlyIncome += amount;
+        } else {
+            stats.monthlyExpenses += Math.abs(amount);
+            if (type === 'expense') {
+                updateCategory(category, Math.abs(amount));
+            }
+        }
+    }
+
+    // Save updated stats and spending to Firebase
+    saveStats(stats);
+    saveSpending(spending);
 }
 
 // Delete transaction
 async function deleteTransaction(id) {
     if (firebaseInitialized && db) {
         try {
-            await db.collection('transactions').doc(id).delete();
-            console.log('Transaction deleted from Firebase');
+            const userRef = getUserRef();
+            if (userRef) {
+                await userRef.collection('transactions').doc(id).delete();
+                console.log('Transaction deleted from Firebase');
+            }
         } catch (error) {
             console.error('Error deleting transaction:', error);
         }
+    }
+
+    // Find transaction before deleting to update stats
+    const transaction = currentData.transactions.find(t => t.id === id);
+    if (transaction) {
+        updateStatsFromTransaction(transaction, 'delete');
     }
 
     currentData.transactions = currentData.transactions.filter(t => t.id !== id);
@@ -448,13 +560,16 @@ async function saveGoal(goal) {
 
     if (firebaseInitialized && db) {
         try {
-            if (isNew) {
-                const docRef = await db.collection('goals').add(goal);
-                goal.id = docRef.id;
-            } else {
-                await db.collection('goals').doc(goal.id).set(goal);
+            const userRef = getUserRef();
+            if (userRef) {
+                if (isNew) {
+                    const docRef = await userRef.collection('goals').add(goal);
+                    goal.id = docRef.id;
+                } else {
+                    await userRef.collection('goals').doc(goal.id).set(goal);
+                }
+                console.log('Goal saved to Firebase');
             }
-            console.log('Goal saved to Firebase');
         } catch (error) {
             console.error('Error saving goal:', error);
         }
@@ -479,8 +594,11 @@ async function saveGoal(goal) {
 async function deleteGoal(id) {
     if (firebaseInitialized && db) {
         try {
-            await db.collection('goals').doc(id).delete();
-            console.log('Goal deleted from Firebase');
+            const userRef = getUserRef();
+            if (userRef) {
+                await userRef.collection('goals').doc(id).delete();
+                console.log('Goal deleted from Firebase');
+            }
         } catch (error) {
             console.error('Error deleting goal:', error);
         }
@@ -497,14 +615,83 @@ async function saveSpending(spending) {
 
     if (firebaseInitialized && db) {
         try {
-            await db.collection('dashboard').doc('spending').set(spending);
-            console.log('Spending saved to Firebase');
+            const userRef = getUserRef();
+            if (userRef) {
+                await userRef.collection('dashboard').doc('spending').set(spending);
+                console.log('Spending saved to Firebase');
+            }
         } catch (error) {
             console.error('Error saving spending:', error);
         }
     }
 
     refreshSpendingChartUI();
+}
+
+
+
+// Save Portfolio Item
+async function savePortfolioItem(item) {
+    const isNew = !item.id || item.id.startsWith('asset_'); // Local IDs start with asset_
+
+    if (firebaseInitialized && db) {
+        try {
+            const userRef = getUserRef();
+            if (userRef) {
+                // If it was a temp ID, remove it so Firestore generates one, or use it?
+                // Better to let Firestore generate ID for new items
+                const itemToSave = { ...item };
+                if (isNew && itemToSave.id && itemToSave.id.startsWith('asset_')) {
+                    delete itemToSave.id;
+                }
+
+                if (isNew || !item.id || item.id.toString().startsWith('asset_')) {
+                    const docRef = await userRef.collection('portfolio').add(itemToSave);
+                    item.id = docRef.id;
+                } else {
+                    await userRef.collection('portfolio').doc(item.id).set(itemToSave);
+                }
+                console.log('Portfolio item saved to Firebase');
+            }
+        } catch (error) {
+            console.error('Error saving portfolio item:', error);
+        }
+    } else {
+        if (!item.id) item.id = 'asset_' + Date.now();
+    }
+
+    // Update local data
+    const existingIndex = currentData.portfolio.findIndex(i => i.id === item.id);
+    if (existingIndex >= 0) {
+        currentData.portfolio[existingIndex] = item;
+    } else {
+        currentData.portfolio.push(item);
+    }
+
+    refreshPortfolioUI();
+    // Start chart update if available
+    if (typeof initPortfolioAllocationChart === 'function') initPortfolioAllocationChart();
+    showNotification('Investment saved!', 'success');
+}
+
+// Delete Portfolio Item
+async function deletePortfolioItem(id) {
+    if (firebaseInitialized && db) {
+        try {
+            const userRef = getUserRef();
+            if (userRef) {
+                await userRef.collection('portfolio').doc(id).delete();
+                console.log('Portfolio item deleted from Firebase');
+            }
+        } catch (error) {
+            console.error('Error deleting portfolio item:', error);
+        }
+    }
+
+    currentData.portfolio = currentData.portfolio.filter(i => i.id !== id);
+    refreshPortfolioUI();
+    if (typeof initPortfolioAllocationChart === 'function') initPortfolioAllocationChart();
+    showNotification('Investment deleted!', 'success');
 }
 
 /* ============================================
@@ -516,7 +703,10 @@ function refreshUI() {
     refreshTransactionsUI();
     refreshGoalsUI();
     refreshPortfolioUI();
-    // Charts are refreshed through their own functions
+    // Refresh charts using the new valid global function
+    if (typeof window.refreshCharts === 'function') {
+        window.refreshCharts();
+    }
 }
 
 function refreshStatsUI() {
@@ -861,9 +1051,10 @@ function openTransactionModal(transaction = null) {
         const type = formData.get('type');
         const amount = parseFloat(formData.get('amount'));
         const tags = formData.get('tags') ? formData.get('tags').split(',').filter(t => t) : [];
+        const id = formData.get('id');
 
         const transactionData = {
-            id: formData.get('id') || null,
+            id: id && id.trim() !== '' ? id : null,
             name: formData.get('name'),
             amount: type === 'expense' ? -Math.abs(amount) : Math.abs(amount),
             type: type,
@@ -1049,6 +1240,8 @@ window.FinanceDB = {
     saveGoal,
     deleteGoal,
     saveSpending,
+    savePortfolioItem,
+    deletePortfolioItem,
     loadAllData,
     openTransactionModal,
     openGoalModal,

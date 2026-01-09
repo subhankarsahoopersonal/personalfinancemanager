@@ -234,11 +234,11 @@ function initRevenueChart() {
     gradient2.addColorStop(1, 'rgba(168, 85, 247, 0)');
 
     const data = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: [],
         datasets: [
             {
                 label: 'Revenue',
-                data: [12500, 18200, 14800, 22400, 19600, 25800, 28500],
+                data: [],
                 borderColor: '#6366f1',
                 backgroundColor: gradient,
                 fill: true,
@@ -252,7 +252,7 @@ function initRevenueChart() {
             },
             {
                 label: 'Expenses',
-                data: [8200, 9100, 7800, 10200, 11400, 9800, 12200],
+                data: [],
                 borderColor: '#a855f7',
                 backgroundColor: gradient2,
                 fill: true,
@@ -355,6 +355,9 @@ function initRevenueChart() {
     };
 
     window.revenueChart = new Chart(ctx, config);
+
+    // Initial data load
+    updateRevenueChart('week');
 }
 
 /* ============================================
@@ -364,10 +367,23 @@ function initRevenueChart() {
 function initSpendingChart() {
     const ctx = document.getElementById('spendingChart').getContext('2d');
 
+    // Get data directly from FinanceDB
+    const financeData = typeof FinanceDB !== 'undefined' ? FinanceDB.currentData() : null;
+    const spendingData = financeData ? financeData.spending : {};
+
+    // Default categories if missing
+    const labels = Object.keys(spendingData).length > 0
+        ? Object.keys(spendingData)
+        : ['Housing', 'Food', 'Transport', 'Shopping', 'Entertainment', 'Others'];
+
+    const dataValues = Object.keys(spendingData).length > 0
+        ? Object.values(spendingData)
+        : [0, 0, 0, 0, 0, 0];
+
     const data = {
-        labels: ['Housing', 'Food', 'Transport', 'Shopping', 'Entertainment', 'Others'],
+        labels: labels,
         datasets: [{
-            data: [2800, 1200, 800, 1500, 600, 520],
+            data: dataValues,
             backgroundColor: [
                 '#6366f1',
                 '#a855f7',
@@ -414,7 +430,7 @@ function initSpendingChart() {
                         label: function (context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = Math.round((context.parsed / total) * 100);
-                            return '$' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
+                            return formatCurrency(context.parsed) + ' (' + percentage + '%)';
                         }
                     }
                 }
@@ -422,7 +438,7 @@ function initSpendingChart() {
         }
     };
 
-    const chart = new Chart(ctx, config);
+    window.spendingChart = new Chart(ctx, config);
 
     // Create custom legend
     createSpendingLegend(data);
@@ -553,31 +569,96 @@ function initChartPeriodButtons() {
 
 function updateRevenueChart(period) {
     const chart = window.revenueChart;
+    const data = typeof FinanceDB !== 'undefined' ? FinanceDB.currentData() : null;
+    if (!data || !chart) return;
 
-    const periodData = {
-        week: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            revenue: [12500, 18200, 14800, 22400, 19600, 25800, 28500],
-            expenses: [8200, 9100, 7800, 10200, 11400, 9800, 12200]
-        },
-        month: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            revenue: [68500, 72400, 85200, 92800],
-            expenses: [42000, 45600, 48200, 52800]
-        },
-        year: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            revenue: [180000, 195000, 210000, 225000, 240000, 255000, 268000, 280000, 295000, 310000, 328000, 345000],
-            expenses: [120000, 125000, 130000, 138000, 142000, 150000, 155000, 162000, 168000, 175000, 182000, 190000]
+    const transactions = data.transactions || [];
+    let labels = [];
+    let revenueData = [];
+    let expensesData = [];
+
+    const now = new Date();
+
+    // Helper to get day name
+    const getDayName = (d) => d.toLocaleDateString('en-US', { weekday: 'short' });
+
+    if (period === 'week') {
+        // Last 7 days
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            labels.push(getDayName(d));
+
+            // Filter transactions for this day
+            const dayStr = d.toISOString().split('T')[0];
+            const dayRevenue = transactions
+                .filter(t => t.amount >= 0 && t.date.startsWith(dayStr))
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            const dayExpense = transactions
+                .filter(t => t.amount < 0 && t.date.startsWith(dayStr))
+                .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount)), 0);
+
+            revenueData.push(dayRevenue);
+            expensesData.push(dayExpense);
         }
-    };
+    } else if (period === 'month') {
+        // Weekly breakdown of current month
+        const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+        labels = weeks;
+        revenueData = [0, 0, 0, 0, 0];
+        expensesData = [0, 0, 0, 0, 0];
 
-    const data = periodData[period];
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-    chart.data.labels = data.labels;
-    chart.data.datasets[0].data = data.revenue;
-    chart.data.datasets[1].data = data.expenses;
-    chart.update('active');
+        transactions.forEach(t => {
+            const tDate = new Date(t.date);
+            if (tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
+                // Approximate week mapping
+                const day = tDate.getDate();
+                const weekIndex = Math.floor((day - 1) / 7);
+                if (weekIndex < 5) {
+                    if (t.amount >= 0) {
+                        revenueData[weekIndex] += parseFloat(t.amount);
+                    } else {
+                        expensesData[weekIndex] += Math.abs(parseFloat(t.amount));
+                    }
+                }
+            }
+        });
+
+        // Remove empty 5th week if not needed but keep consistent for now
+        if (revenueData[4] === 0 && expensesData[4] === 0) {
+            labels.pop();
+            revenueData.pop();
+            expensesData.pop();
+        }
+
+    } else if (period === 'year') {
+        // Monthly breakdown of current year
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        revenueData = new Array(12).fill(0);
+        expensesData = new Array(12).fill(0);
+
+        const currentYear = now.getFullYear();
+
+        transactions.forEach(t => {
+            const tDate = new Date(t.date);
+            if (tDate.getFullYear() === currentYear) {
+                const monthIndex = tDate.getMonth();
+                if (t.amount >= 0) {
+                    revenueData[monthIndex] += parseFloat(t.amount);
+                } else {
+                    expensesData[monthIndex] += Math.abs(parseFloat(t.amount));
+                }
+            }
+        });
+    }
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = revenueData;
+    chart.data.datasets[1].data = expensesData;
+    chart.update();
 }
 
 /* ============================================
@@ -635,7 +716,7 @@ function animateValue(elementId, start, end, duration) {
         const easeOutQuad = 1 - (1 - progress) * (1 - progress);
         const current = Math.floor(start + (end - start) * easeOutQuad);
 
-        valueElement.textContent = '$' + current.toLocaleString() + '.00';
+        valueElement.textContent = formatCurrency(current);
 
         if (progress < 1) {
             requestAnimationFrame(update);
@@ -1270,6 +1351,8 @@ function generateReport(type) {
     // In a real app, this would generate a PDF or detailed report
 }
 
+
+
 /* ============================================
    HELPER FUNCTIONS FOR PAGES
    ============================================ */
@@ -1407,35 +1490,23 @@ function openPortfolioModal(asset = null) {
 }
 
 function savePortfolioItem(item) {
-    if (typeof FinanceDB !== 'undefined') {
-        const data = FinanceDB.currentData();
-        if (!data.portfolio) data.portfolio = [];
-
-        const existingIndex = data.portfolio.findIndex(a => a.id === item.id);
-        if (existingIndex >= 0) {
-            data.portfolio[existingIndex] = item;
-        } else {
-            data.portfolio.push(item);
-        }
-
-        FinanceDB.save(data).then(() => {
-            initPortfolioPage();
-            initPortfolioAllocationChart();
-            showNotification('Investment saved!', 'success');
+    if (typeof FinanceDB !== 'undefined' && FinanceDB.savePortfolioItem) {
+        FinanceDB.savePortfolioItem(item).then(() => {
+            // UI refresh will be handled by firebase-data.js calling refreshPortfolioUI
+            // But we might want to manually refresh the chart here or let firebase-data.js do it
+            // firebase-data.js does refreshPortfolioUI and calls initPortfolioAllocationChart if available
         });
+    } else {
+        // Fallback for local dev without FinanceDB init
+        console.warn('FinanceDB not available');
     }
 }
 
 function handleDeletePortfolioItem(id) {
     if (confirm('Delete this investment?')) {
-        if (typeof FinanceDB !== 'undefined') {
-            const data = FinanceDB.currentData();
-            data.portfolio = data.portfolio.filter(a => a.id !== id);
-            FinanceDB.save(data).then(() => {
+        if (typeof FinanceDB !== 'undefined' && FinanceDB.deletePortfolioItem) {
+            FinanceDB.deletePortfolioItem(id).then(() => {
                 closeModal();
-                initPortfolioPage();
-                initPortfolioAllocationChart();
-                showNotification('Investment deleted', 'success');
             });
         }
     }
@@ -1558,3 +1629,29 @@ if (transactionsList) {
     transactionsList.parentElement.appendChild(addBtn);
 }
 
+
+function refreshCharts() {
+    if (window.revenueChart) {
+        // Refresh revenue chart with current period
+        const activeBtn = document.querySelector('.chart-period.active');
+        const period = activeBtn ? activeBtn.dataset.period : 'week';
+        updateRevenueChart(period);
+    }
+
+    // Refresh spending chart completely
+    if (window.spendingChart) {
+        window.spendingChart.destroy();
+    }
+    initSpendingChart();
+
+    if (typeof initPortfolioAllocationChart === 'function') {
+        initPortfolioAllocationChart();
+    }
+
+    // Refresh analytics chart
+    if (window.analyticsChartInstance) {
+        window.analyticsChartInstance.destroy();
+        window.analyticsChartInstance = null; // Clear reference
+    }
+    initAnalyticsChart();
+}
